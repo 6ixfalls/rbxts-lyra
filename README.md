@@ -28,6 +28,8 @@ While Lyra has been tested and is used in production, it's still in early develo
 This module is maintained relatively sporadically as I don't currently use `@rbxts/lyra` in my own games. Use at your own risk; Review the source as needed.
 This fork aims to maintain the least amount of additional code and as a result, no changes to the `.luau` files are done except when necessary to support roblox-ts as an architecture. TypeScript typings match the `.luau` types.
 
+Ping @sixfalls in the [roblox-ts Discord](https://discord.roblox-ts.com/) for any support or issues with using the package.
+
 ## Features
 
 - **Transactions** - A powerful tool to implement features like trading, while making bugs like item duplication impossible
