@@ -1,5 +1,3 @@
---!strict
-
 local function splitUtf8String(str: string, maxSizeBytes: number): { string }
 	assert(typeof(str) == "string", `splitUtf8String: expected string for 'str', got {typeof(str)}`)
 	assert(

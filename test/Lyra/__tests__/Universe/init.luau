@@ -1,5 +1,3 @@
---!strict
-
 type UniverseImpl = {
 	__index: UniverseImpl,
 

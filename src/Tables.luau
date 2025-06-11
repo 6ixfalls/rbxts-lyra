@@ -1,5 +1,3 @@
---!strict
-
 local function copyDeep<T>(t: T): T
 	if typeof(t) ~= "table" then
 		return t

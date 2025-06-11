@@ -1,5 +1,3 @@
---!strict
-
 local HttpService = game:GetService("HttpService")
 
 local Tables = require(script.Parent.Tables)

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-rc.0
+* Commented (almost) the entire codebase
+* Expanded Moonwave generated API docs
+* Added .luaurc ([#5](https://github.com/paradoxum-games/lyra/issues/5), thanks [@ffrostfall](https://github.com/ffrostfall)!)
+* Change changedCallbacks to be -> () instead of -> () -> () ([#4](https://github.com/paradoxum-games/lyra/issues/4), thanks [@ffrostfall](https://github.com/ffrostfall)!)
+* Fixed a race condition with locks and added tests for it
+* Fixed Promise absolute require ([#3](https://github.com/paradoxum-games/lyra/issues/3), thanks [@ffrostfall](https://github.com/ffrostfall)!)
+
 ## 0.4.1
 * Added tests for changedCallbacks
 * Simplified orphaned file cleanup implementation

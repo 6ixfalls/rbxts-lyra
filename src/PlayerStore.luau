@@ -1,11 +1,3 @@
---!strict
-
-local Players = game:GetService("Players")
-
-local Promise = require(script.Parent.Promise)
-local Store = require(script.Parent.Store)
-local Types = require(script.Parent.Types)
-
 --[=[
 	A PlayerStore wraps a regular Store to provide a more convenient API for working with Player data.
 	It automatically converts Players to UserId keys and handles player kicks on data errors.
@@ -19,25 +11,30 @@ local Types = require(script.Parent.Types)
 		},
 		schema = function(data)
 			return typeof(data.coins) == "number" and typeof(data.items) == "table",
-				"Invalid data format"
+			"Invalid data format"
 		end,
 	})
 
 	-- Load data when player joins
 	Players.PlayerAdded:Connect(function(player)
-		playerStore:load(player):andThen(function()
-			print("Data loaded for", player.Name)
-		end)
+		playerStore:loadAsync(player)
 	end)
 
 	-- Unload data when player leaves
 	Players.PlayerRemoving:Connect(function(player)
-		playerStore:unload(player)
+		playerStore:unloadAsync(player)
 	end)
 	```
 
 	@class PlayerStore
 ]=]
+
+local Players = game:GetService("Players")
+
+local Log = require(script.Parent.Log)
+local Promise = require(script.Parent.Promise)
+local Store = require(script.Parent.Store)
+local Types = require(script.Parent.Types)
 
 type PlayerStoreImpl<T> = {
 	__index: PlayerStoreImpl<T>,
@@ -55,7 +52,7 @@ type PlayerStoreImpl<T> = {
 		self: PlayerStore<T>,
 		players: { Player },
 		transformFunction: (state: { [Player]: T }) -> boolean
-	) -> Promise.Promise,
+	) -> Promise.TPromise<boolean>,
 	save: (self: PlayerStore<T>, player: Player) -> Promise.Promise,
 	close: (self: PlayerStore<T>) -> Promise.Promise,
 	peek: (self: PlayerStore<T>, userId: number) -> T,
@@ -87,7 +84,7 @@ type PlayerStoreProps<T> = {
 	.schema (value: any) -> (boolean, string?) -- A function to validate data
 	.migrationSteps { MigrationStep }? -- Optional migration steps
 	.importLegacyData ((key: string) -> any?)? -- Optional function to import legacy data
-	.changedCallbacks { (key: string, newData: T, oldData: T?) -> () -> () }? -- Optional callbacks for data changes
+	.changedCallbacks { (key: string, newData: T, oldData: T?) -> () }? -- Optional callbacks for data changes
 	.logCallback ((logMessage: LogMessage) -> ())? -- Optional callback for log messages
 	.memoryStoreService MemoryStoreService? -- Optional MemoryStoreService instance for mocking
 	.dataStoreService DataStoreService? -- Optional DataStoreService instance for mocking
@@ -100,8 +97,8 @@ type PlayerStoreConfig<T> = {
 	schema: (value: any) -> (boolean, string?),
 	migrationSteps: { Types.MigrationStep }?,
 	importLegacyData: ((key: string) -> any?)?,
-	changedCallbacks: { (key: string, newData: T, oldData: T?) -> () -> () }?,
-	logCallback: ((logMessage: Types.LogMessage) -> ())?,
+	changedCallbacks: { (key: string, newData: T, oldData: T?) -> () }?,
+	logCallback: ((logMessage: Log.LogMessage) -> ())?,
 	disableReferenceProtection: boolean?,
 	memoryStoreService: MemoryStoreService?,
 	dataStoreService: DataStoreService?,
@@ -144,7 +141,6 @@ PlayerStore.__index = PlayerStore
 	@param config PlayerStoreConfig<T> -- Configuration for the store
 	@return PlayerStore<T>
 	@within PlayerStore
-	@function create
 ]=]
 local function createPlayerStore<T>(config: PlayerStoreConfig<T>): PlayerStore<T>
 	local self: PlayerStore<T>
@@ -210,6 +206,7 @@ end
 	Syntactic sugar for `playerStore:get(player):expect()`.
 
 	See [PlayerStore:get]
+	@yields
 ]=]
 function PlayerStore:getAsync(player: Player)
 	return self:get(player):expect()
@@ -245,6 +242,7 @@ end
 	Syntactic sugar for `playerStore:load(player):expect()`.
 
 	See [PlayerStore:load]
+	@yields
 ]=]
 function PlayerStore:loadAsync(player: Player)
 	return self:load(player):expect()
@@ -272,6 +270,7 @@ end
 	Syntactic sugar for `playerStore:unload(player):expect()`.
 
 	See [PlayerStore:unload]
+	@yields
 ]=]
 function PlayerStore:unloadAsync(player: Player)
 	return self:unload(player):expect()
@@ -306,6 +305,7 @@ end
 	Syntactic sugar for `playerStore:update(player, transformFunction):expect()`.
 
 	See [PlayerStore:update]
+	@yields
 ]=]
 function PlayerStore:updateAsync<T>(player: Player, transformFunction: (data: T) -> boolean)
 	return self:update(player, transformFunction):expect()
@@ -330,10 +330,13 @@ end
 	@error "Key not loaded" -- One or more players' data hasn't been loaded
 	@error "Store is closed" -- The store has been closed
 	@error "Schema validation failed" -- The transformed data failed schema validation
-	@return Promise -- Resolves when the transaction is complete
+	@return Promise -- Resolves with `true` if the transaction was successful, or `false` if it was aborted. Rejects on error.
 	@within PlayerStore
 ]=]
-function PlayerStore:tx<T>(players: { Player }, transformFunction: (state: { [Player]: T }) -> boolean)
+function PlayerStore:tx<T>(
+	players: { Player },
+	transformFunction: (state: { [Player]: T }) -> boolean
+): Promise.TPromise<boolean>
 	local userIdKeys = table.create(#players)
 	local userIdKeyToPlayer = {}
 	for i, player in players do
@@ -373,6 +376,7 @@ end
 	Syntactic sugar for `playerStore:tx(players, transformFunction):expect()`.
 
 	See [PlayerStore:tx]
+	@yields
 ]=]
 function PlayerStore:txAsync<T>(players: { Player }, transformFunction: (state: { [Player]: T }) -> boolean)
 	return self:tx(players, transformFunction):expect()
@@ -399,6 +403,7 @@ end
 	Syntactic sugar for `playerStore:save(player):expect()`.
 
 	See [PlayerStore:save]
+	@yields
 ]=]
 function PlayerStore:saveAsync(player: Player)
 	return self:save(player):expect()
@@ -419,6 +424,7 @@ end
 	Syntactic sugar for `playerStore:close():expect()`.
 
 	See [PlayerStore:close]
+	@yields
 ]=]
 function PlayerStore:closeAsync()
 	return self:close():expect()
@@ -445,6 +451,7 @@ end
 	Syntactic sugar for `playerStore:peek(userId):expect()`.
 
 	See [PlayerStore:peek]
+	@yields
 ]=]
 function PlayerStore:peekAsync(userId: number)
 	return self:peek(userId):expect()

@@ -250,7 +250,7 @@ describe("tx", function()
 
 		jest.advanceTimersByTime(1000)
 
-		return expect(txPromise).resolves.toBeUndefined():andThen(function()
+		return expect(txPromise).resolves.toBe(true):andThen(function()
 			expect(keySet).toBe(false)
 		end)
 	end)
@@ -286,7 +286,7 @@ describe("tx", function()
 		jest.advanceTimersByTime(1000)
 
 		return expect(txPromise).resolves
-			.toBeUndefined()
+			.toBe(true)
 			:andThen(function()
 				expect(txCommitted).toBe(true)
 				return store:get("key1")
@@ -294,5 +294,29 @@ describe("tx", function()
 			:andThen(function(key1Data)
 				return expect(key1Data).toEqual({ coins = 15 })
 			end)
+	end)
+
+	it("should abort when transformFunction returns false", function()
+		store:load("key1")
+		store:load("key2")
+		jest.advanceTimersByTime(1000)
+
+		local txPromise = store:tx({ "key1", "key2" }, function(state)
+			state.key1.coins += 10
+			state.key2.coins += 10
+			return false
+		end)
+
+		jest.advanceTimersByTime(1000)
+
+		return expect(txPromise).resolves.toBe(false):andThen(function()
+			local key1Data = store:get("key1")
+			local key2Data = store:get("key2")
+			jest.advanceTimersByTime(1000)
+
+			return expect(key1Data).resolves.toEqual({ coins = 0 }):andThen(function()
+				return expect(key2Data).resolves.toEqual({ coins = 0 })
+			end)
+		end)
 	end)
 end)
