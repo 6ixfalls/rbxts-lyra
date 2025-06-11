@@ -213,14 +213,14 @@ export interface Store<Schema extends object> {
     tx(
         keys: string[],
         transformFunction: (state: Map<string, Schema>) => boolean
-    ): Promise<void>;
+    ): Promise<boolean>;
     /**
      * Syntatic sugar for `tx(keys, transformFunction):expect().`
      */
     txAsync(
         keys: string[],
         transformFunction: (state: Map<string, Schema>) => boolean
-    ): void;
+    ): boolean;
     /**
         Forces an immediate save of the given key's data.
         
@@ -257,13 +257,13 @@ export interface Store<Schema extends object> {
         end)
         ```
 
-        @return Promise<T> -- Resolves with the current data
+        @return Promise<T> -- Resolves with the data object, or `nil` if the key doesn't exist. Rejects on DataStore errors.
     */
-    peek(key: string): Promise<Schema>;
+    peek(key: string): Promise<Schema | undefined>;
     /**
      * Syntatic sugar for `peek(key):expect().`
      */
-    peekAsync(key: string): Schema;
+    peekAsync(key: string): Schema | undefined;
     /**
         Checks if a lock is currently active for the given key.
 

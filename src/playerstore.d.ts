@@ -9,7 +9,7 @@ import { BaseStoreConfig } from "./sharedstore";
 	.schema (value: any) -> (boolean, string?) -- A function to validate data
 	.migrationSteps { MigrationStep }? -- Optional migration steps
 	.importLegacyData ((key: string) -> any?)? -- Optional function to import legacy data
-	.changedCallbacks { (key: string, newData: T, oldData: T?) -> () -> () }? -- Optional callbacks for data changes
+	.changedCallbacks { (key: string, newData: T, oldData: T?) -> () }? -- Optional callbacks for data changes
 	.logCallback ((logMessage: LogMessage) -> ())? -- Optional callback for log messages
 	.memoryStoreService MemoryStoreService? -- Optional MemoryStoreService instance for mocking
 	.dataStoreService DataStoreService? -- Optional DataStoreService instance for mocking
@@ -133,19 +133,19 @@ export interface PlayerStore<Schema extends object> {
         @error "Key not loaded" -- One or more players' data hasn't been loaded
         @error "Store is closed" -- The store has been closed
         @error "Schema validation failed" -- The transformed data failed schema validation
-        @returns {Promise<void>} -- Resolves when the transaction is complete
+        @returns {Promise<boolean>} -- Resolves when the transaction is complete
      */
     tx(
         players: Player[],
         transformFunction: (state: Map<Player, Schema>) => boolean
-    ): Promise<void>;
+    ): Promise<boolean>;
     /**
      * Syntatic sugar for `tx(players, transformFunction):expect().`
      */
     txAsync(
         players: Player[],
         transformFunction: (state: Map<Player, Schema>) => boolean
-    ): void;
+    ): boolean;
     /**
      * 	Forces an immediate save of the given player's data.
 
@@ -180,11 +180,11 @@ export interface PlayerStore<Schema extends object> {
         end)
         ```
 
-        @returns {Promise<Schema>} -- Resolves with the current data
+        @returns {Promise<Schema>} -- Resolves with the data object, or `nil` if the key doesn't exist. Rejects on DataStore errors.
      */
-    peek(userId: number): Promise<Schema>;
+    peek(userId: number): Promise<Schema | undefined>;
     /**
      * Syntatic sugar for `peek(userId):expect().`
      */
-    peekAsync(userId: number): Schema;
+    peekAsync(userId: number): Schema | undefined;
 }
