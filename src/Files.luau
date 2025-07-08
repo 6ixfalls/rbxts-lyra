@@ -16,9 +16,9 @@
 	    the shard ID.
 	2.  **Compression:** Before sharding, the JSON-encoded data is converted to binary using
 	    `buffer.fromstring`. This binary representation is then JSON-encoded *again* before
-	    being split into UTF-8 safe shards using `splitUtf8String`. Roblox automatically
-		compresses buffers when encoding them using `JSONEncode`. This helps reduce the
-	    number of shards required, minimizing DataStore requests.
+	    being split into shards. Roblox automatically compresses buffers when encoding them
+		using `JSONEncode`. This helps reduce the number of shards required, minimizing
+		DataStore requests.
 
 	**Shard Key Naming:** Shard data is stored using keys formatted as `{shardId}-{shardIndex}`,
 	where `shardId` is a unique GUID generated for the file and `shardIndex` is the 1-based
@@ -28,10 +28,29 @@
 local HttpService = game:GetService("HttpService")
 
 local Types = require(script.Parent.Types)
-local splitUtf8String = require(script.Parent.splitUtf8String)
 local Promise = require(script.Parent.Promise)
 local Tables = require(script.Parent.Tables)
 local dataStoreRetry = require(script.Parent.dataStoreRetry)
+
+--[=[
+	Splits a string into chunks of a specified size.
+	Used for sharding large data blobs into smaller pieces.
+
+	@within Files
+	@param str string -- The string to be split.
+	@param chunkSize number -- The size of each chunk.
+	@return { string } -- A table containing the split chunks.
+]=]
+local function splitString(str: string, chunkSize: number): { string }
+	local numChunks = math.ceil(#str / chunkSize)
+	local chunks = {}
+	for i = 1, numChunks do
+		local start = (i - 1) * chunkSize + 1
+		local chunk = string.sub(str, start, start + chunkSize - 1)
+		table.insert(chunks, chunk)
+	end
+	return chunks
+end
 
 --[=[
 	Checks if a file object represents a sharded file (i.e., data stored across multiple keys).
@@ -47,7 +66,7 @@ end
 --[=[
 	@within Files
 	Parameters required for the `write` function.
-		
+
 	@interface WriteParams
 	.store DataStore -- The DataStore instance to write to.
 	.data any -- The Luau data to be stored. Must be JSON-encodable.
@@ -106,7 +125,7 @@ local function write(params: WriteParams): Promise.TPromise<Types.File>
 	local dataCompressed = HttpService:JSONEncode(buffer.fromstring(dataEncoded))
 
 	-- Step 3: Split the compressed, double-encoded string into shards.
-	local shards = splitUtf8String(dataCompressed, params.maxShardSize)
+	local shards = splitString(dataCompressed, params.maxShardSize)
 
 	-- Step 4: Generate metadata for the sharded file.
 	local shardId = HttpService:GenerateGUID(false) -- Unique ID for this set of shards.

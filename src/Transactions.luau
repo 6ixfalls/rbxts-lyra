@@ -42,6 +42,10 @@ export type ReadTxParams = {
 	txInfo: Types.TxInfo,
 }
 
+-- We never want to read a cached value for a transaction marker.
+local getOptions = Instance.new("DataStoreGetOptions")
+getOptions.UseCache = false
+
 --[=[
 	Reads data, considering the status of an associated transaction.
 
@@ -79,7 +83,7 @@ local function readTx(params: ReadTxParams): Promise.TPromise<any>
 
 	-- Fetch the transaction status marker from the DataStore using the txId.
 	return dataStoreRetry(function()
-		return params.store:GetAsync(txId)
+		return params.store:GetAsync(txId, getOptions)
 	end):andThen(function(txStatus)
 		-- Check the transaction status using the nil/false convention.
 		-- `nil` means the transaction successfully committed.
