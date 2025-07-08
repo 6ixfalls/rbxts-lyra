@@ -115,6 +115,35 @@ export interface PlayerStore<Schema extends object> {
         transformFunction: (data: Schema) => boolean
     ): boolean;
     /**
+     *  Updates data for the given player using a transform function that does not mutate the original data.
+        The transform function must return the new data or false to abort.
+
+        ```lua
+        playerStore:updateImmutable(player, function(data)
+            if data.coins < 100 then
+                return { coins = data.coins + 50 } -- Return new data to commit changes
+            end
+            return false -- Don't commit changes
+        end)
+        ```
+
+        @error "Key not loaded" -- The player's data hasn't been loaded
+        @error "Store is closed" -- The store has been closed
+        @error "Schema validation failed" -- The transformed data failed schema validation
+        @returns {Promise<boolean>} -- Resolves when the update is complete
+     */
+    updateImmutable(
+        player: Player,
+        transformFunction: (data: Schema) => Schema | false
+    ): Promise<boolean>;
+    /**
+     * Syntatic sugar for `updateImmutable(player, transformFunction):expect().`
+     */
+    updateImmutableAsync(
+        player: Player,
+        transformFunction: (data: Schema) => Schema | false
+    ): boolean;
+    /**
      * 	Performs a transaction across multiple players' data atomically.
         All players' data must be loaded first. Either all changes apply or none do.
 
@@ -145,6 +174,43 @@ export interface PlayerStore<Schema extends object> {
     txAsync(
         players: Player[],
         transformFunction: (state: Map<Player, Schema>) => boolean
+    ): boolean;
+    /**
+     *  Performs a transaction across multiple players' data atomically using immutable updates.
+        All players' data must be loaded first. Either all changes apply or none do.
+
+        ```lua
+        playerStore:txImmutable({player1, player2}, function(state)
+            -- Transfer coins between players
+            if state[player1].coins >= 100 then
+                return {
+                    [player1] = { coins = state[player1].coins - 100 },
+                    [player2] = { coins = state[player2].coins + 100 },
+                } -- Commit transaction with new data
+            end
+            return false -- Abort transaction
+        end)
+        ```
+
+        @error "Key not loaded" -- One or more players' data hasn't been loaded
+        @error "Store is closed" -- The store has been closed
+        @error "Schema validation failed" -- The transformed data failed schema validation
+        @returns {Promise<boolean>} -- Resolves with `true` if the transaction was successful, or `false` if it was aborted. Rejects on error.
+     */
+    txImmutable(
+        players: Player[],
+        transformFunction: (
+            state: Map<Player, Schema>
+        ) => Map<Player, Schema> | false
+    ): Promise<boolean>;
+    /**
+     * Syntactic sugar for `txImmutable(players, transformFunction):expect().`
+     */
+    txImmutableAsync(
+        players: Player[],
+        transformFunction: (
+            state: Map<Player, Schema>
+        ) => Map<Player, Schema> | false
     ): boolean;
     /**
      * 	Forces an immediate save of the given player's data.

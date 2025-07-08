@@ -185,6 +185,36 @@ export interface Store<Schema extends object> {
         transformFunction: (data: Schema) => boolean
     ): boolean;
     /**
+     *  Applies changes to the data for a given key using a transform function,
+        with immutable copy-on-write semantics.
+
+        The `transformFunction` receives the current data but frozen (immutable),
+        and cannot modify it directly. Instead, it should return new data that
+        reflects the desired changes. Otherwise it should return `false` to abort
+        the update without saving.
+
+        Changes are applied optimistically to the in-memory state first and then queued
+        for saving to the DataStore.
+
+        @param key string -- The key whose data to update.
+        @param transformFunction (data: T) -> T | false -- A function that receives the current data and returns a new copy of the data with changes to commit changes, or `false` to abort.
+        @return Promise<boolean> -- Resolves with `true` if the transform function committed and the update was successfully queued, or `false` if the transform function returned `false`. Rejects on errors like key not loaded, store closed, or schema validation failure after transformation.
+        @error "Key not loaded" -- If `load()` has not been successfully called for this key.
+        @error "Store is closed" -- If the store instance has been closed.
+        @error "Schema validation failed" -- If the data returned by `transformFunction` does not pass the store's schema check.
+     */
+    updateImmutable(
+        key: string,
+        transformFunction: (data: Schema) => Schema | false
+    ): Promise<boolean>;
+    /**
+     * Syntatic sugar for `updateImmutable(key, transformFunction):expect().`
+     */
+    updateImmutableAsync(
+        key: string,
+        transformFunction: (data: Schema) => Schema | false
+    ): boolean;
+    /**
         Performs a transaction across multiple keys atomically.
         All keys must be loaded first. Either all changes are applied, or none are.
 
@@ -220,6 +250,44 @@ export interface Store<Schema extends object> {
     txAsync(
         keys: string[],
         transformFunction: (state: Map<string, Schema>) => boolean
+    ): boolean;
+    /**
+     *  Performs an atomic transaction across multiple keys with immutable, copy-on-write semantics.
+
+        The data passed to the function is frozen and cannot be modified directly.
+        Instead, the function should return a new table with the desired changes.
+
+        Requires the keys to be loaded first via `load()`. The `transformFunction`
+        is called with the current state of all involved keys and must return the
+        new state to commit or `false` to abort.
+
+        Propagates errors from the transaction process, including DataStore errors,
+        schema validation failures, and key loading issues.
+
+        @param keys {string} -- An array of keys involved in the transaction.
+        @param transformFunction (state: { [string]: T }) -> { [string]: T } | false -- The transformation function.
+        @return Promise<boolean> -- Resolves with `true` if the transaction was successful, or `false` if it was aborted. Rejects on error.
+        @error "Key not loaded" -- If any key in the `keys` array has not been loaded.
+        @error "Key is already locked by another transaction" -- If any key is already involved in an ongoing `tx`.
+        @error "Key is closed" -- If any involved session has been closed (e.g., due to lock loss).
+        @error "Store is closed" -- If the store instance has been closed.
+        @error "Schema validation failed" -- If the data for any key after transformation fails the schema check.
+        @error "Keys changed in transaction" -- If the `transformFunction` attempts to add or remove keys from the state table it receives.
+     */
+    txImmutable(
+        keys: string[],
+        transformFunction: (
+            state: Map<string, Schema>
+        ) => Map<string, Schema> | false
+    ): Promise<boolean>;
+    /**
+     * Syntactic sugar for `txImmutable(keys, transformFunction):expect().`
+     */
+    txImmutableAsync(
+        keys: string[],
+        transformFunction: (
+            state: Map<string, Schema>
+        ) => Map<string, Schema> | false
     ): boolean;
     /**
         Forces an immediate save of the given key's data.
