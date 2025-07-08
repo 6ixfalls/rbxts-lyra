@@ -1,6 +1,6 @@
 {
     "name": "@rbxts/lyra",
-    "version": "0.5.0-rc.0",
+    "version": "0.6.0",
     "main": "src/init.luau",
     "types": "src/index.d.ts",
     "description": "A DataStoreService wrapper",
