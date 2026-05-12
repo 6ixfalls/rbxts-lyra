@@ -11,7 +11,7 @@ export namespace MigrationStep {
      */
     export function addFields<Arg, Return, NewFields extends object>(
         name: string,
-        fields: NewFields
+        fields: NewFields,
     ): TMigrationStep<Arg, Return & NewFields>;
     /**
      * Transforms the data using a function.
@@ -21,7 +21,7 @@ export namespace MigrationStep {
      */
     export function transform<Arg, Return>(
         name: string,
-        transformer: (data: Arg) => Return
+        transformer: (data: Arg) => Return,
     ): TMigrationStep<Arg, Return>;
 }
 
@@ -31,7 +31,7 @@ export namespace MigrationStep {
  * @param config The configuration for the player store.
  */
 export function createPlayerStore<Schema extends object>(
-    config: PlayerStoreConfig<Schema>
+    config: PlayerStoreConfig<Schema>,
 ): PlayerStore<Schema>;
 
 /**

@@ -4,23 +4,23 @@ export class DataStoreService {
         this: DataStoreService,
         name: string,
         scope?: string,
-        options?: DataStoreOptions
+        options?: DataStoreOptions,
     ): DataStore;
     GetGlobalDataStore(this: DataStoreService): DataStore;
     GetOrderedDataStore(
         this: DataStoreService,
         name: string,
-        scope?: string
+        scope?: string,
     ): OrderedDataStore;
     GetRequestBudgetForRequestType(
         this: DataStoreService,
-        requestType: CastsToEnum<Enum.DataStoreRequestType>
+        requestType: CastsToEnum<Enum.DataStoreRequestType>,
     ): number;
     ListDataStoresAsync(
         this: DataStoreService,
         prefix?: string,
         pageSize?: number,
-        cursor?: string
+        cursor?: string,
     ): DataStoreListingPages;
 }
 
@@ -30,7 +30,7 @@ export class MemoryStoreService {
     GetQueue(
         this: MemoryStoreService,
         name: string,
-        invisibilityTimeout?: number
+        invisibilityTimeout?: number,
     ): MemoryStoreQueue;
     GetSortedMap(this: MemoryStoreService, name: string): MemoryStoreSortedMap;
 }

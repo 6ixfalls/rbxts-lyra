@@ -14,7 +14,7 @@ export namespace PlayerStore {
      * @param config The configuration for the player store.
      */
     export function create<Schema extends object>(
-        config: PlayerStoreConfig<Schema>
+        config: PlayerStoreConfig<Schema>,
     ): PlayerStore<Schema>;
 }
 
@@ -96,18 +96,18 @@ export interface PlayerStore<Schema extends object> {
      * @error "Key not loaded" The player's data hasn't been loaded
      * @error "Store is closed" The store has been closed
      * @error "Schema validation failed" The transformed data failed schema validation
-     * @returns Resolves when the update is complete
+     * @returns Resolves when the update is complete, with the boolean returned by the transformFunction
      */
     update(
         player: Player,
-        transformFunction: (data: Schema) => boolean
+        transformFunction: (data: Schema) => boolean,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `update(player, transformFunction):expect()`.
      */
     updateAsync(
         player: Player,
-        transformFunction: (data: Schema) => boolean
+        transformFunction: (data: Schema) => boolean,
     ): boolean;
     /**
      * Updates data for the given player using a transform function that does not mutate the original data.
@@ -130,14 +130,14 @@ export interface PlayerStore<Schema extends object> {
      */
     updateImmutable(
         player: Player,
-        transformFunction: (data: Schema) => Schema | false
+        transformFunction: (data: Schema) => Schema | false,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `updateImmutable(player, transformFunction):expect()`.
      */
     updateImmutableAsync(
         player: Player,
-        transformFunction: (data: Schema) => Schema | false
+        transformFunction: (data: Schema) => Schema | false,
     ): boolean;
     /**
      * Performs a transaction across multiple players' data atomically.
@@ -159,18 +159,18 @@ export interface PlayerStore<Schema extends object> {
      * @error "Key not loaded" One or more players' data hasn't been loaded
      * @error "Store is closed" The store has been closed
      * @error "Schema validation failed" The transformed data failed schema validation
-     * @returns Resolves when the transaction is complete
+     * @returns Resolves with `true` if the transaction was successful, or `false` if it was aborted. Rejects on error.
      */
     tx(
         players: Player[],
-        transformFunction: (state: Map<Player, Schema>) => boolean
+        transformFunction: (state: Map<Player, Schema>) => boolean,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `tx(players, transformFunction):expect()`.
      */
     txAsync(
         players: Player[],
-        transformFunction: (state: Map<Player, Schema>) => boolean
+        transformFunction: (state: Map<Player, Schema>) => boolean,
     ): boolean;
     /**
      * Performs a transaction across multiple players' data atomically using immutable updates.
@@ -198,8 +198,8 @@ export interface PlayerStore<Schema extends object> {
     txImmutable(
         players: Player[],
         transformFunction: (
-            state: Map<Player, Schema>
-        ) => Map<Player, Schema> | false
+            state: Map<Player, Schema>,
+        ) => Map<Player, Schema> | false,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `txImmutable(players, transformFunction):expect().`
@@ -207,8 +207,8 @@ export interface PlayerStore<Schema extends object> {
     txImmutableAsync(
         players: Player[],
         transformFunction: (
-            state: Map<Player, Schema>
-        ) => Map<Player, Schema> | false
+            state: Map<Player, Schema>,
+        ) => Map<Player, Schema> | false,
     ): boolean;
     /**
      * Forces an immediate save of the given player's data.

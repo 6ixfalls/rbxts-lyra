@@ -44,10 +44,6 @@ export interface StoreConfig<Schema> extends BaseStoreConfig<Schema> {
      * Optional function to call if the DataStore lock is lost
      */
     onLockLost?: (key: string) => void;
-    /**
-     * Use a mock DataStore (Studio only)
-     */
-    useMock?: boolean;
 }
 
 export namespace Store {
@@ -81,7 +77,7 @@ export namespace Store {
      * @returns A new Store instance
      */
     export function createStore<Schema extends object>(
-        config: StoreConfig<Schema>
+        config: StoreConfig<Schema>,
     ): Store<Schema>;
 }
 
@@ -175,14 +171,14 @@ export interface Store<Schema extends object> {
      */
     update(
         key: string,
-        transformFunction: (data: Schema) => boolean
+        transformFunction: (data: Schema) => boolean,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `update(key, transformFunction):expect()`.
      */
     updateAsync(
         key: string,
-        transformFunction: (data: Schema) => boolean
+        transformFunction: (data: Schema) => boolean,
     ): boolean;
     /**
      * Applies changes to the data for a given key using a transform function,
@@ -205,14 +201,14 @@ export interface Store<Schema extends object> {
      */
     updateImmutable(
         key: string,
-        transformFunction: (data: Schema) => Schema | false
+        transformFunction: (data: Schema) => Schema | false,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `updateImmutable(key, transformFunction):expect()`.
      */
     updateImmutableAsync(
         key: string,
-        transformFunction: (data: Schema) => Schema | false
+        transformFunction: (data: Schema) => Schema | false,
     ): boolean;
     /**
      * Performs a transaction across multiple keys atomically.
@@ -243,14 +239,14 @@ export interface Store<Schema extends object> {
      */
     tx(
         keys: string[],
-        transformFunction: (state: Map<string, Schema>) => boolean
+        transformFunction: (state: Map<string, Schema>) => boolean,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `tx(keys, transformFunction):expect()`.
      */
     txAsync(
         keys: string[],
-        transformFunction: (state: Map<string, Schema>) => boolean
+        transformFunction: (state: Map<string, Schema>) => boolean,
     ): boolean;
     /**
      * Performs an atomic transaction across multiple keys with immutable, copy-on-write semantics.
@@ -278,8 +274,8 @@ export interface Store<Schema extends object> {
     txImmutable(
         keys: string[],
         transformFunction: (
-            state: Map<string, Schema>
-        ) => Map<string, Schema> | false
+            state: Map<string, Schema>,
+        ) => Map<string, Schema> | false,
     ): Promise<boolean>;
     /**
      * Syntactic sugar for `txImmutable(keys, transformFunction):expect().`
@@ -287,8 +283,8 @@ export interface Store<Schema extends object> {
     txImmutableAsync(
         keys: string[],
         transformFunction: (
-            state: Map<string, Schema>
-        ) => Map<string, Schema> | false
+            state: Map<string, Schema>,
+        ) => Map<string, Schema> | false,
     ): boolean;
     /**
      * Forces an immediate save of the given key's data.
@@ -363,13 +359,13 @@ export interface Store<Schema extends object> {
      */
     readVersion(
         key: string,
-        version: string
+        version: string,
     ): Promise<LuaTuple<[Schema, DataStoreKeyInfo]>>;
     /**
      * Syntactic sugar for `readVersion(key, version):expect()`.
      */
     readVersionAsync(
         key: string,
-        version: string
+        version: string,
     ): LuaTuple<[Schema, DataStoreKeyInfo]>;
 }
