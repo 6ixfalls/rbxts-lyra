@@ -16,5 +16,17 @@ jobs:
           node-version: "24.x"
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false # never use caching in release builds
+      - name: Determine npm dist tag
+        id: npm-tag
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*$ ]]; then
+            echo "tag=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
       - run: npm ci
-      - run: npm publish --provenance --access public
+      - run: npm publish --provenance --access public --tag "$NPM_TAG"
+        env:
+          NPM_TAG: ${{ steps.npm-tag.outputs.tag }}
